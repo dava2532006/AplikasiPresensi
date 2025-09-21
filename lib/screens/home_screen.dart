@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:presensi/models/user.dart';
 import 'package:presensi/services/absensi_firestore_service.dart';
+import 'package:presensi/screens/add_employee_screen.dart'; // Import halaman baru
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -21,6 +22,19 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Beranda'),
         centerTitle: true,
+        actions: [
+          // Tombol untuk menambahkan pegawai hanya terlihat jika role adalah 'admin'
+          if (widget.user.role == 'admin')
+            IconButton(
+              icon: const Icon(Icons.person_add),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddEmployeeScreen()),
+                );
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

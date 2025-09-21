@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:presensi/screens/add_employee_screen.dart';
+import 'package:presensi/screens/home_screen.dart';
+import 'package:presensi/screens/login_screen.dart';
 import 'package:presensi/screens/splash_screen.dart'; 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';

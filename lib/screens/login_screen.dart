@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:presensi/screens/home_screen.dart';
 import 'package:presensi/services/auth_service.dart';
 import 'package:presensi/models/user.dart' as app_user;
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen>
   final AuthService _authService = AuthService();
 
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   late AnimationController _controller;
   late Animation<double> _logoAnimation;
@@ -43,25 +45,69 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _login() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    app_user.User? user = await _authService.signIn(email, password);
+    try {
+      app_user.User? user = await _authService.signIn(email, password);
+      final firebase_auth.User? firebaseUser =
+          firebase_auth.FirebaseAuth.instance.currentUser;
 
-    if (user != null && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
-      );
-    } else {
+      // Cek status verifikasi email
+      if (firebaseUser != null && !firebaseUser.emailVerified) {
+        throw firebase_auth.FirebaseAuthException(
+          code: 'email-not-verified',
+          message: 'Email belum diverifikasi. Silakan cek inbox Anda.',
+        );
+      }
+
+      if (mounted) {
+        if (user != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login gagal. Periksa kembali email dan password Anda.'),
+            ),
+          );
+        }
+      }
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (mounted) {
+        String message;
+        if (e.code == 'user-not-found' || e.code == 'wrong-password') {
+          message = 'Email atau kata sandi salah.';
+        } else if (e.code == 'email-not-verified') {
+          message = 'Email Anda belum diverifikasi. Silakan cek kotak masuk email Anda.';
+        } else {
+          message = e.message ?? 'Terjadi kesalahan saat login.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+          ),
+        );
+      }
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login gagal. Periksa kembali email dan password Anda.'),
+          SnackBar(
+            content: Text(e.toString()),
           ),
         );
       }
     }
+
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -92,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen>
                   opacity: _logoAnimation,
                   child: Image.asset(
                     'assets/images/logo.png',
-                    height: 200, // 👉 diperkecil biar container nggak terlalu besar
+                    height: 200,
                     width: 200,
                   ),
                 ),
@@ -141,12 +187,16 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                       elevation: 4,
                     ),
-                    onPressed: _login,
-                    child: const Text(
-                      'Login',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.white),
-                    ),
+                    onPressed: _isLoading ? null : _login,
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Login',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
                   ),
                 ),
               ],
