@@ -1,15 +1,22 @@
 class User {
-  final String _username;
-  final String _password;
-  final String _name;
-  final String _position; 
-  final String _email;   
+  final String uid;
+  final String name;
+  final String email;
+  final String position;
 
-  User(this._username, this._password, this._name, this._position, this._email);
+  User({
+    required this.uid,
+    required this.name,
+    required this.email,
+    required this.position,
+  });
 
-  String get username => _username;
-  String get password => _password;
-  String get name => _name;
-  String get position => _position;
-  String get email => _email;
+  factory User.fromMap(Map<String, dynamic> data) {
+    return User(
+      uid: data['uid'] ?? '',
+      name: data['name'] ?? '',
+      email: data['email'] ?? '',
+      position: data['position'] ?? '',
+    );
+  }
 }
