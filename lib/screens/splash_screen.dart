@@ -41,17 +41,17 @@ class _SplashScreenState extends State<SplashScreen> {
             // Logo Aplikasi
             Image(
               image: AssetImage('assets/images/logo.png'),
-              width: 200,
-              height: 200,
+              width: 400,
+              height: 400,
             ),
             SizedBox(height: 20),
-            Text(
-              'Aplikasi Presensi',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            // Text(
+            //   'Aplikasi Presensi',
+            //   style: TextStyle(
+            //     fontSize: 28,
+            //     fontWeight: FontWeight.bold,
+            //   ),
+            // ),
             SizedBox(height: 10),
             Text(
               'Dibuat oleh: Dhava Gilang Ramadhan',

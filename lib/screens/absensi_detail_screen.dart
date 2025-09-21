@@ -56,7 +56,7 @@ class AbsensiDetailScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 _buildDetailRow(
                   icon: Icons.calendar_today,
-                  label: 'Tanggal',
+                  label: 'Tanggal ',
                   value: formattedDate,
                 ),
                 const SizedBox(height: 16),
