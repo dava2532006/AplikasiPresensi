@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presensi/screens/home_screen.dart';
+import 'package:presensi/screens/change_password_screen.dart';
 import 'package:presensi/services/auth_service.dart';
 import 'package:presensi/models/user.dart' as app_user;
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
@@ -11,67 +12,143 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
 
-  bool _isPasswordVisible = false;
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
-  late AnimationController _controller;
+  late AnimationController _logoAnimationController;
   late Animation<double> _logoAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _logoAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     );
 
     _logoAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _logoAnimationController, curve: Curves.easeInOut),
     );
 
-    _controller.forward();
+    _logoAnimationController.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _logoAnimationController.dispose();
     super.dispose();
   }
 
-  void _login() async {
+  void _handleResendEmail(firebase_auth.User user, BuildContext dialogContext) async {
+    try {
+      await _authService.resendEmailVerification(user);
+      if (mounted) {
+        Navigator.of(dialogContext).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Email verifikasi telah dikirim ulang."),
+          ),
+        );
+      }
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (mounted) {
+        Navigator.of(dialogContext).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Gagal mengirim ulang email: ${e.message}"),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showEmailVerificationDialog(firebase_auth.User user) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text("Verifikasi Email Diperlukan"),
+          content: const Text(
+            "Akun Anda belum diverifikasi. Mohon periksa email Anda untuk link verifikasi. Jika Anda belum menerimanya, Anda dapat mengirim ulang email.",
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Kirim Ulang Email"),
+              onPressed: () => _handleResendEmail(user, dialogContext),
+            ),
+            TextButton(
+              child: const Text("Tutup"),
+              onPressed: () {
+                if (mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleLogin() async {
     setState(() {
       _isLoading = true;
     });
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
     try {
-      app_user.User? user = await _authService.signIn(email, password);
-      final firebase_auth.User? firebaseUser =
-          firebase_auth.FirebaseAuth.instance.currentUser;
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
 
-      // Cek status verifikasi email
-      if (firebaseUser != null && !firebaseUser.emailVerified) {
-        throw firebase_auth.FirebaseAuthException(
-          code: 'email-not-verified',
-          message: 'Email belum diverifikasi. Silakan cek inbox Anda.',
-        );
-      }
+      firebase_auth.UserCredential? userCredential = await _authService.signIn(email, password);
+      
+      if (userCredential != null) {
+        firebase_auth.User? firebaseUser = userCredential.user;
 
-      if (mounted) {
-        if (user != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
-          );
-        } else {
+        if (firebaseUser != null) {
+          await firebaseUser.reload();
+          
+          if (firebaseUser.emailVerified) {
+            if (password == 'password') {
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => ChangePasswordScreen(user: firebaseUser)),
+                );
+              }
+            } else {
+              app_user.User? user = await _authService.getUserData(firebaseUser.uid);
+              if (mounted) {
+                if (user != null) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomeScreen(user: user)),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Data pengguna tidak ditemukan.'),
+                    ),
+                  );
+                }
+              }
+            }
+          } else {
+            // Hapus baris _authService.signOut() di sini
+            if (mounted) {
+              _showEmailVerificationDialog(firebaseUser);
+            }
+          }
+        }
+      } else {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Login gagal. Periksa kembali email dan password Anda.'),
@@ -84,8 +161,6 @@ class _LoginScreenState extends State<LoginScreen>
         String message;
         if (e.code == 'user-not-found' || e.code == 'wrong-password') {
           message = 'Email atau kata sandi salah.';
-        } else if (e.code == 'email-not-verified') {
-          message = 'Email Anda belum diverifikasi. Silakan cek kotak masuk email Anda.';
         } else {
           message = e.message ?? 'Terjadi kesalahan saat login.';
         }
@@ -103,11 +178,13 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   @override
@@ -118,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen>
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Container(
-            width: 350, // 👉 batas lebar container biar kecil
+            width: 350,
             padding: const EdgeInsets.all(24.0),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -167,8 +244,11 @@ class _LoginScreenState extends State<LoginScreen>
                             ? Icons.visibility
                             : Icons.visibility_off,
                       ),
-                      onPressed: () =>
-                          setState(() => _isPasswordVisible = !_isPasswordVisible),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -187,15 +267,16 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                       elevation: 4,
                     ),
-                    onPressed: _isLoading ? null : _login,
+                    onPressed: _isLoading ? null : _handleLogin,
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text(
                             'Login',
                             style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                   ),
                 ),
