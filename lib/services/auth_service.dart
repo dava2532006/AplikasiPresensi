@@ -42,9 +42,9 @@ class AuthService {
         password: password,
       );
       return result;
-    } on firebase_auth.FirebaseAuthException catch (e) {
+    } on firebase_auth.FirebaseAuthException {
       // Melemparkan kembali exception Firebase Auth agar dapat ditangani di UI
-      throw e;
+      rethrow;
     }
   }
 
@@ -61,7 +61,7 @@ class AuthService {
   Future<void> resendEmailVerification(firebase_auth.User user) async {
     try {
       await user.sendEmailVerification();
-    } on firebase_auth.FirebaseAuthException catch (e) {
+    } on firebase_auth.FirebaseAuthException {
       rethrow; // Melemparkan kembali exception untuk ditangani di UI
     }
   }
