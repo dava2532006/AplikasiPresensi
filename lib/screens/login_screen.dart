@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:presensi/screens/forgot_password.dart';
 import 'package:presensi/screens/home_screen.dart';
 import 'package:presensi/screens/change_password_screen.dart';
 import 'package:presensi/services/auth_service.dart';
@@ -123,7 +124,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   MaterialPageRoute(builder: (context) => ChangePasswordScreen(user: firebaseUser)),
                 );
               }
-            } else {
+            } 
+            else {
               app_user.User? user = await _authService.getUserData(firebaseUser.uid);
               if (mounted) {
                 if (user != null) {
@@ -140,14 +142,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                 }
               }
             }
-          } else {
-            // Hapus baris _authService.signOut() di sini
+          } 
+          else {
             if (mounted) {
               _showEmailVerificationDialog(firebaseUser);
             }
           }
         }
-      } else {
+      } 
+      else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -156,7 +159,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           );
         }
       }
-    } on firebase_auth.FirebaseAuthException catch (e) {
+    }
+     on firebase_auth.FirebaseAuthException catch (e) {
       if (mounted) {
         String message;
         if (e.code == 'user-not-found' || e.code == 'wrong-password') {
@@ -178,7 +182,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           ),
         );
       }
-    } finally {
+    }
+    
+     finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -280,6 +286,21 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ForgotPasswordScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Lupa Password?',
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ), 
               ],
             ),
           ),

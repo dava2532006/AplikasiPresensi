@@ -42,9 +42,9 @@ class AuthService {
         password: password,
       );
       return result;
-    } on firebase_auth.FirebaseAuthException {
+    } on firebase_auth.FirebaseAuthException catch (e) {
       // Melemparkan kembali exception Firebase Auth agar dapat ditangani di UI
-      rethrow;
+      throw e;
     }
   }
 
@@ -61,7 +61,7 @@ class AuthService {
   Future<void> resendEmailVerification(firebase_auth.User user) async {
     try {
       await user.sendEmailVerification();
-    } on firebase_auth.FirebaseAuthException {
+    } on firebase_auth.FirebaseAuthException catch (e) {
       rethrow; // Melemparkan kembali exception untuk ditangani di UI
     }
   }
@@ -69,6 +69,14 @@ class AuthService {
   // Fungsi untuk memperbarui kata sandi
   Future<void> updatePassword(firebase_auth.User user, String newPassword) async {
     await user.updatePassword(newPassword);
+  }
+  Future<String?> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return null; // Berhasil
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      return e.message; // Mengembalikan pesan error jika gagal
+    }
   }
 
   // Fungsi untuk logout
