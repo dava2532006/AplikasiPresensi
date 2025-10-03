@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:presensi/screens/change_password_profile_screen.dart';
 import 'package:presensi/screens/splash_screen.dart';
 import 'firebase_options.dart';
 
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const SplashScreen  ()
+      home: const ChangePasswordProfileScreen(),
     );
   }
 }

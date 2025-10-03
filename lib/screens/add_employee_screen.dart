@@ -16,7 +16,48 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
 
   bool _isLoading = false;
 
-  void _addEmployee() async {
+  // Fungsi untuk menampilkan dialog konfirmasi
+  void _showConfirmationDialog() {
+    // Mengambil data dari input fields
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+
+    // Validasi input sederhana
+    if (name.isEmpty || email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan Email tidak boleh kosong!')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Penambahan Pegawai'),
+          content: Text('Anda yakin ingin menambahkan "$name" sebagai pegawai baru?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Ya, Tambahkan'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+                _performAddEmployee();      // Lanjutkan proses penambahan
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Fungsi inti untuk menambahkan pegawai setelah dikonfirmasi
+  void _performAddEmployee() async {
     setState(() {
       _isLoading = true;
     });
@@ -28,15 +69,15 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
     // Kata sandi default
     const String defaultPassword = "password";
 
-    // Memanggil fungsi signUp dengan 5 argumen, termasuk 'role'
+    // Memanggil fungsi signUp dengan role 'pegawai'
     String? result = await _authService.signUp(name, email, defaultPassword, position, 'pegawai');
 
     if (mounted) {
       if (result == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pegawai berhasil ditambahkan! Email verifikasi telah dikirim ke alamat yang bersangkutan.')),
+          const SnackBar(content: Text('Pegawai berhasil ditambahkan! Email verifikasi telah dikirim.')),
         );
-        Navigator.pop(context); // Kembali ke halaman sebelumnya
+        Navigator.pop(context); // Kembali ke halaman beranda
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal menambahkan pegawai: $result')),
@@ -88,7 +129,8 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _addEmployee,
+                // Mengganti onPressed untuk memanggil dialog
+                onPressed: _isLoading ? null : _showConfirmationDialog,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Tambah Pegawai'),

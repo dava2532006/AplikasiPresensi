@@ -78,7 +78,47 @@ class AuthService {
       return e.message; // Mengembalikan pesan error jika gagal
     }
   }
+  // Fungsi untuk memperbarui data user (hanya nama untuk saat ini)
+   Future<void> updateUserData(String uid, String name) async {
+    await _db.collection('users').doc(uid).update({
+      'name': name,
+    });
+  }
 
+  // Fungsi untuk mengganti password dengan verifikasi password lama
+   Future<String?> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return 'Pengguna tidak ditemukan. Silakan login kembali.';
+      }
+
+      // Buat kredensial dengan password saat ini
+      final cred = firebase_auth.EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      // Lakukan re-autentikasi pengguna
+      await user.reauthenticateWithCredential(cred);
+
+      // Jika berhasil, perbarui password
+      await user.updatePassword(newPassword);
+
+      return null; 
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      // Tangani error spesifik seperti password salah
+      if (e.code == 'wrong-password') {
+        return 'Kata sandi saat ini salah.';
+      }
+      return e.message; // Kembalikan pesan error lainnya
+    } catch (e) {
+      return 'Terjadi kesalahan tidak terduga.';
+    }
+  }
   // Fungsi untuk logout
   Future<void> signOut() async {
     await _auth.signOut();
