@@ -18,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AbsensiFirestoreService _absensiService = AbsensiFirestoreService();
   late Stream<QuerySnapshot> _absensiStream;
+  bool _isAbsenLoading = false;
 
   @override
   void initState() {
@@ -26,144 +27,129 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleAbsen(String status) async {
+    setState(() {
+      _isAbsenLoading = true;
+    });
+
     String result = await _absensiService.recordAbsensi(status);
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
     }
-  }
+    
+    setState(() {
+      _isAbsenLoading = false;
+    });
+  } 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: widget.user.role == 'admin'
-          ? FloatingActionButton(
+      appBar: AppBar(
+        title: const Text('Beranda'),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: Colors.grey[800]),
+        titleTextStyle: TextStyle(
+            color: Colors.grey[800], fontSize: 20, fontWeight: FontWeight.bold),
+        actions: [
+          if (widget.user.role == 'admin')
+            IconButton(
+              icon: const Icon(Icons.person_add),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AddEmployeeScreen()),
                 );
               },
-              shape: const CircleBorder(),
-              child: const Icon(Icons.person_add),
-            )
-          : null,
-      
-      // BottomAppBar yang sudah disesuaikan
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            // Tombol Beranda
-            Padding(
-              padding: const EdgeInsets.only(left: 20.0),
-              child: IconButton(
-                tooltip: 'Beranda',
-                icon: const Icon(Icons.home, color: Colors.blue, size: 30),
-                onPressed: () {
-                  // Tidak melakukan apa-apa karena sudah di halaman beranda
-                },
-              ),
             ),
-            // Tombol Profil
-            Padding(
-              padding: const EdgeInsets.only(right: 20.0),
-              child: IconButton(
-                tooltip: 'Profil',
-                icon: Icon(Icons.person, color: Colors.grey[700], size: 30),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen(user: widget.user)),
-                  );
-                },
-              ),
-            ),
-          ],
+        ],
+        leading: IconButton(
+          icon: const Icon(Icons.account_circle),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileScreen(user: widget.user)),
+            );
+          },
         ),
       ),
-
-      body: SafeArea(
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Card(
-                        elevation: 4,
-                        shadowColor: Colors.grey.withOpacity(0.1),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(24.0),
-                          child: _buildGreeting(),
-                        ),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Card(
+                      elevation: 4,
+                      shadowColor: Colors.grey.withOpacity(0.1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: _buildGreeting(),
                       ),
-                      const SizedBox(height: 16),
-                      Card(
-                        elevation: 4,
-                        shadowColor: Colors.grey.withOpacity(0.1),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: _buildAttendanceButtons(),
-                        ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      elevation: 4,
+                      shadowColor: Colors.grey.withOpacity(0.1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: _buildAttendanceButtons(),
                       ),
-                      const SizedBox(height: 24),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Riwayat Absensi',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
-                                );
-                              },
-                              child: const Text(
-                                'Lihat Semua',
-                                style: TextStyle(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                    ),
+                    const SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Riwayat Absensi',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                              );
+                            },
+                            child: const Text(
+                              'Lihat Semua',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: _buildHistorySection(),
-                  ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: _buildHistorySection(),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ... (Sisa kode widget _buildGreeting, _buildAttendanceButtons, _buildHistorySection tidak berubah)
   Widget _buildGreeting() {
     var hour = DateTime.now().hour;
     String greeting;
@@ -193,8 +179,10 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => _handleAbsen('Masuk'),
-            icon: const Icon(Icons.login, color: Colors.white),
+            onPressed: _isAbsenLoading ? null : () => _handleAbsen('Masuk'),
+            icon: _isAbsenLoading 
+                  ? Container(width: 24, height: 24, padding: const EdgeInsets.all(2.0), child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                  : const Icon(Icons.login, color: Colors.white),
             label: const Text('Masuk', style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -206,8 +194,10 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => _handleAbsen('Keluar'),
-            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _isAbsenLoading ? null : () => _handleAbsen('Keluar'),
+            icon: _isAbsenLoading 
+                  ? Container(width: 24, height: 24, padding: const EdgeInsets.all(2.0), child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                  : const Icon(Icons.logout, color: Colors.white),
             label: const Text('Keluar', style: TextStyle(color: Colors.white)),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -256,7 +246,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final int itemCount = groupedData.length > itemCountLimit ? itemCountLimit : groupedData.length;
 
         return ListView.builder(
-          padding: EdgeInsets.zero,
           itemCount: itemCount,
           itemBuilder: (context, index) {
             final dateKey = groupedData.keys.elementAt(index);

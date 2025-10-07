@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:presensi/screens/login_screen.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -33,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -44,15 +46,15 @@ class _SplashScreenState extends State<SplashScreen> {
               width: 400,
               height: 400,
             ),
+            // Animasi Loading
+            LoadingAnimationWidget.fourRotatingDots(
+              color: Colors.blue,
+              size: 50,
+            ),
+
             SizedBox(height: 20),
-            // Text(
-            //   'Aplikasi Presensi',
-            //   style: TextStyle(
-            //     fontSize: 28,
-            //     fontWeight: FontWeight.bold,
-            //   ),
-            // ),
             SizedBox(height: 10),
+            
             Text(
               'Dibuat oleh: Dhava Gilang Ramadhan',
               style: TextStyle(
