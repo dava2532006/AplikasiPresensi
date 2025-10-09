@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:presensi/models/user.dart';
+import 'package:presensi/screens/add_employee_screen.dart';
 import 'package:presensi/screens/history_screen.dart';
 import 'package:presensi/screens/profile_screen.dart';
 import 'package:presensi/services/absensi_firestore_service.dart';
@@ -38,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final address = data['display_name'] ?? 'Alamat tidak ditemukan';
-        // Memotong alamat jika terlalu panjang
         return address.length > 50 ? '${address.substring(0, 50)}...' : address;
       }
       return 'Gagal mengambil alamat (Server)';
@@ -67,121 +67,12 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _isAbsenLoading = false);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20.0),
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 24),
-            _buildWelcomeCard(),
-            const SizedBox(height: 24),
-            _buildAttendanceButtons(),
-            const SizedBox(height: 24),
-            _buildHistoryHeader(),
-            const SizedBox(height: 10),
-            _buildHistoryList(),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNavBar(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-           _showAbsenDialog();
-        },
-        backgroundColor: Colors.blue,
-        elevation: 4.0,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.fingerprint, color: Colors.white, size: 30),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  // --- WIDGET-WIDGET YANG DIPERBARUI ---
-
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        const CircleAvatar(
-          radius: 30,
-          backgroundColor: Colors.white,
-          child: Icon(Icons.person, size: 40, color: Colors.blue),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.user.name,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      _currentAddress,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWelcomeCard() {
-    var hour = DateTime.now().hour;
-    String greeting;
-    if (hour < 11) {
-      greeting = 'Selamat Pagi';
-    } else if (hour < 15) {
-      greeting = 'Selamat Siang';
-    } else if (hour < 19) {
-      greeting = 'Selamat Sore';
-    } else {
-      greeting = 'Selamat Malam';
-    }
-
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.user.position.isNotEmpty ? widget.user.position : 'Pegawai',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$greeting, selamat dan semangat bekerja!',
-              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-   void _showAbsenDialog() {
+  void _showAbsenDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Konfirmasi Absensi'),
           content: const Text('Pilih tipe absensi Anda:'),
           actions: <Widget>[
@@ -205,27 +96,115 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA), // Latar belakang abu-abu muda
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          children: [
+            const SizedBox(height: 20),
+            _buildHeader(),
+            const SizedBox(height: 24),
+            _buildWelcomeCard(),
+            const SizedBox(height: 16),
+            _buildAttendanceButtons(),
+            const SizedBox(height: 24),
+            _buildHistoryHeader(),
+            const SizedBox(height: 10),
+            _buildHistoryList(),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomNavBar(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAbsenDialog,
+        backgroundColor: Colors.blue,
+        elevation: 4.0,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.fingerprint, color: Colors.white, size: 30),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        const CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.white,
+          child: Icon(Icons.person, size: 30, color: Colors.blue),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.user.name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      _currentAddress,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWelcomeCard() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3E8FF).withOpacity(0.5), // Warna ungu muda transparan
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.user.position.isNotEmpty ? widget.user.position : 'Pegawai',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Selamat Malam, selamat dan semangat bekerja!',
+            style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAttendanceButtons() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3E8FF).withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: IntrinsicHeight(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildActionButton(
-              label: 'Masuk',
-              onTap: () => _handleAbsen('Masuk'),
-              color: Colors.blue,
-              icon: Icons.login,
-            ),
-            const VerticalDivider(width: 1, thickness: 1, indent: 10, endIndent: 10),
-            _buildActionButton(
-              label: 'Keluar',
-              onTap: () => _handleAbsen('Keluar'),
-              color: Colors.red,
-              icon: Icons.logout,
-            ),
+            _buildActionButton(label: 'Masuk', onTap: () => _handleAbsen('Masuk'), color: Colors.blue, icon: Icons.arrow_forward),
+            const VerticalDivider(width: 1, thickness: 1, indent: 16, endIndent: 16),
+            _buildActionButton(label: 'Keluar', onTap: () => _handleAbsen('Keluar'), color: Colors.red, icon: Icons.arrow_back),
           ],
         ),
       ),
@@ -236,21 +215,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Expanded(
       child: InkWell(
         onTap: _isAbsenLoading ? null : onTap,
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           child: Column(
             children: [
-              Icon(icon, color: color),
+              Icon(icon, color: color, size: 20),
               const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -262,10 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          '5 Hari Terakhir',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        const Text('5 Hari Terakhir', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         TextButton(
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HistoryScreen())),
           child: const Text('Lihat Semua'),
@@ -279,21 +248,26 @@ class _HomeScreenState extends State<HomeScreen> {
       stream: _absensiStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: Padding(padding: EdgeInsets.all(32.0), child: CircularProgressIndicator()));
+          return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Card(child: Padding(padding: EdgeInsets.all(32.0), child: Center(child: Text('Belum ada riwayat absensi.'))));
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32.0),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3E8FF).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(child: Text('Belum ada riwayat absensi.')),
+          );
         }
 
         final allDocs = snapshot.data!.docs;
         final groupedData = <String, List<Map<String, dynamic>>>{};
-
         for (var doc in allDocs) {
           final data = doc.data() as Map<String, dynamic>;
           final dateKey = DateFormat('yyyy-MM-dd').format((data['timestamp'] as Timestamp).toDate());
-          if (!groupedData.containsKey(dateKey)) {
-            groupedData[dateKey] = [];
-          }
+          if (!groupedData.containsKey(dateKey)) groupedData[dateKey] = [];
           groupedData[dateKey]!.add(data);
         }
 
@@ -307,33 +281,35 @@ class _HomeScreenState extends State<HomeScreen> {
             final entries = groupedData[dateKey]!;
             final formattedDate = DateFormat('EEE, d MMM yyyy').format(DateTime.parse(dateKey));
             
-            return Card(
-              elevation: 1,
+            return Container(
               margin: const EdgeInsets.symmetric(vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(formattedDate, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const Divider(),
-                    ...entries.map((entry) {
+              padding: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), spreadRadius: 1, blurRadius: 5)],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: entries.map((entry) {
                       final status = entry['status'] as String;
-                      final time = DateFormat('HH:mm:ss').format((entry['timestamp'] as Timestamp).toDate());
+                      final time = DateFormat('HH:mm').format((entry['timestamp'] as Timestamp).toDate());
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(status),
+                            Text('$status: ', style: const TextStyle(fontWeight: FontWeight.bold)),
                             Text(time),
                           ],
                         ),
                       );
                     }).toList(),
-                  ],
-                ),
+                  ),
+                  Text(formattedDate, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                ],
               ),
             );
           }).toList(),
@@ -343,39 +319,49 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBottomNavBar() {
-  return BottomAppBar(
-    shape: const CircularNotchedRectangle(),
-    notchMargin: 8.0,
-    elevation: 8.0, // Memberi sedikit bayangan agar lebih terlihat
-    child: SizedBox( // Menggunakan SizedBox untuk memastikan tinggi yang konsisten
-      height: 60.0, // Tinggi standar untuk bottom nav bar
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavBarItem(icon: Icons.home, label: 'Home', isSelected: true, onTap: () {}),
-          const SizedBox(width: 40), // Spacer untuk Floating Action Button
-          _buildNavBarItem(icon: Icons.person_outline, label: 'Profile', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen(user: widget.user)))),
-        ],
+    return BottomAppBar(
+      color: const Color(0xFFF3E8FF).withOpacity(0.5),
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 8.0,
+      elevation: 0,
+      child: SizedBox(
+        height: 60.0,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavBarItem(icon: Icons.home, label: 'Home', isSelected: true, onTap: () {}),
+            const SizedBox(width: 40),
+            if (widget.user.role == 'admin')
+              _buildNavBarItem(
+                icon: Icons.person_add,
+                label: 'Tambah',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEmployeeScreen())),
+              )
+            else
+              _buildNavBarItem(
+                icon: Icons.person,
+                label: 'Profil',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen(user: widget.user))),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-Widget _buildNavBarItem({required IconData icon, required String label, bool isSelected = false, required VoidCallback onTap}) {
-  final color = isSelected ? Colors.blue : Colors.grey;
-  return Expanded( // Menggunakan Expanded agar item memiliki lebar yang sama
-    child: InkWell(
+  Widget _buildNavBarItem({required IconData icon, required String label, bool isSelected = false, required VoidCallback onTap}) {
+    final color = isSelected ? Colors.blue : Colors.grey[700];
+    return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24), // Agar efek klik melingkar
+      borderRadius: BorderRadius.circular(24),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center, // Pusatkan konten secara vertikal
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: color),
-          const SizedBox(height: 2), // Mengurangi jarak antara ikon dan teks
-          Text(label, style: TextStyle(color: color, fontSize: 12)), // Ukuran font sedikit dikecilkan
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 }

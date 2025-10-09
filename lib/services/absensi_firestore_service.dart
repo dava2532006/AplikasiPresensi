@@ -13,7 +13,7 @@ class AbsensiFirestoreService {
   // GANTI DENGAN KOORDINAT LOKASI ANDA
   final double _targetLatitude = -7.6363;
   final double _targetLongitude = 111.5225;
-  final double _allowedRadiusInMeters = 100;
+  final double _allowedRadiusInMeters = 200;
 
   Future<String> recordAbsensi(String status) async {
     if (uid == null) return "Gagal: Pengguna tidak ditemukan.";
