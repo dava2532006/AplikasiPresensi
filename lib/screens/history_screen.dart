@@ -78,16 +78,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ...entries.map((entry) {
                         final status = entry['status'] as String;
                         final time = DateFormat('HH:mm').format((entry['timestamp'] as Timestamp).toDate());
+                        // Ambil data lokasi_status, beri nilai default jika tidak ada
+                        final lokasiStatus = entry['lokasi_status'] ?? 'Tidak Diketahui';
+                        final isInside = lokasiStatus == 'Di Dalam Area';
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('$status: $time', style: const TextStyle(fontSize: 16)),
                               Icon(
                                 status == 'Masuk' ? Icons.arrow_forward : Icons.arrow_back,
                                 color: status == 'Masuk' ? Colors.green : Colors.red,
                                 size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('$status: $time', style: const TextStyle(fontSize: 16)),
+                              const Spacer(),
+                              Text(
+                                lokasiStatus,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isInside ? Colors.green : Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
