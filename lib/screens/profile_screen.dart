@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:presensi/models/user.dart';
 import 'package:presensi/screens/change_password_profile_screen.dart';
 import 'package:presensi/screens/edit_profile_screen.dart';
@@ -16,6 +18,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late User currentUser;
+  final ImagePicker _picker = ImagePicker();
+  final AuthService _authService = AuthService.instance;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -23,9 +28,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     currentUser = widget.user;
   }
 
-  // Fungsi untuk refresh data pengguna
   void _refreshUserData() async {
-    final updatedUser = await AuthService().getUserData(currentUser.uid);
+    final updatedUser = await _authService.getUserData(currentUser.uid);
     if (updatedUser != null && mounted) {
       setState(() {
         currentUser = updatedUser;
@@ -33,7 +37,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Fungsi untuk menampilkan dialog konfirmasi logout
+  Future<void> _pickAndUploadImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+
+    if (image == null) return;
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    final photoURL = await _authService.uploadProfilePicture(image, currentUser.uid);
+
+    if (photoURL != null) {
+      await _authService.updateUserPhotoURL(currentUser.uid, photoURL);
+      _refreshUserData();
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal mengunggah gambar.')),
+        );
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _isUploading = false;
+      });
+    }
+  }
+
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -45,14 +77,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               child: const Text('Batal'),
               onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog
+                Navigator.of(context).pop();
               },
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text('Ya, Keluar', style: TextStyle(color: Colors.white)),
               onPressed: () async {
-                await AuthService().signOut();
+                await _authService.signOut();
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -84,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(24.0),
           child: Container(
             width: 350,
-            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0), // Padding disesuaikan
+            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -100,11 +132,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const CircleAvatar(
-                  radius: 60,
-                  backgroundColor: Colors.blue,
-                  child: Icon(Icons.person, size: 80, color: Colors.white),
+                // --- PERUBAHAN UI ADA DI SINI ---
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.blue.shade100,
+                      backgroundImage: currentUser.photoURL != null && currentUser.photoURL!.isNotEmpty
+                          ? NetworkImage("${currentUser.photoURL!}?t=${DateTime.now().millisecondsSinceEpoch}")
+                          : null,
+                      child: (currentUser.photoURL == null || currentUser.photoURL!.isEmpty)
+                          ? const Icon(Icons.person, size: 100, color: Colors.white)
+                          : null,
+                    ),
+                    // Tombol kecil di pojok kanan bawah
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _isUploading ? null : _pickAndUploadImage,
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.white,
+                          child: _isUploading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.blue,
+                                  size: 22,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                // --- SAMPAI SINI ---
                 const SizedBox(height: 16),
                 Text(
                   currentUser.name,
@@ -117,7 +183,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
                 
-                // --- MENU LIST ---
                 _buildProfileInfoRow(
                   icon: Icons.badge_outlined,
                   label: 'Jabatan',
@@ -131,7 +196,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const Divider(height: 20, indent: 16, endIndent: 16),
 
-                // Tombol Update Profil dalam bentuk ListTile
                 ListTile(
                   leading: const Icon(Icons.edit, color: Colors.blueAccent),
                   title: const Text('Update Profil', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -159,7 +223,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   },
                 ),
-                // --- AKHIR MENU LIST ---
 
                 const SizedBox(height: 24),
                 Padding(
@@ -196,7 +259,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // Widget helper untuk menampilkan baris informasi profil
   Widget _buildProfileInfoRow({required IconData icon, required String label, required String value}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),

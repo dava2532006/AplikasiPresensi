@@ -15,7 +15,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _positionController;
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService.instance;
   bool _isLoading = false;
 
   @override

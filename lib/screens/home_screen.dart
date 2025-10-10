@@ -7,6 +7,7 @@ import 'package:presensi/screens/add_employee_screen.dart';
 import 'package:presensi/screens/history_screen.dart';
 import 'package:presensi/screens/profile_screen.dart';
 import 'package:presensi/services/absensi_firestore_service.dart';
+import 'package:presensi/services/auth_service.dart'; // <-- Import AuthService
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -19,6 +20,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // --- PERUBAHAN 1: Buat state untuk user ---
+  late User currentUser;
   final AbsensiFirestoreService _absensiService = AbsensiFirestoreService();
   late Stream<QuerySnapshot> _absensiStream;
   bool _isAbsenLoading = false;
@@ -27,8 +30,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Inisialisasi currentUser dari widget
+    currentUser = widget.user;
     _absensiStream = _absensiService.getAbsensiHistory();
     _updateLocationInfo();
+  }
+
+  // --- PERUBAHAN 2: Fungsi untuk refresh data user ---
+  void _refreshUserData() async {
+    final updatedUser = await AuthService.instance.getUserData(currentUser.uid);
+    if (updatedUser != null && mounted) {
+      setState(() {
+        currentUser = updatedUser;
+      });
+    }
   }
 
   Future<String> _getAddressFromCoordinates(Position position) async {
@@ -99,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Latar belakang abu-abu muda
+      backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -129,13 +144,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- PERUBAHAN 3: Update _buildHeader untuk menampilkan gambar ---
   Widget _buildHeader() {
     return Row(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 24,
-          backgroundColor: Colors.white,
-          child: Icon(Icons.person, size: 30, color: Colors.blue),
+          backgroundColor: Colors.blue.shade100,
+          backgroundImage: currentUser.photoURL != null && currentUser.photoURL!.isNotEmpty
+              ? NetworkImage("${currentUser.photoURL!}?t=${DateTime.now().millisecondsSinceEpoch}")
+              : null,
+          child: (currentUser.photoURL == null || currentUser.photoURL!.isEmpty)
+              ? Icon(Icons.person, size: 30, color: Colors.blue.shade800)
+              : null,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -143,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.user.name,
+                currentUser.name, // Gunakan currentUser
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -172,14 +193,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3E8FF).withOpacity(0.5), // Warna ungu muda transparan
+        color: const Color(0xFFF3E8FF).withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.user.position.isNotEmpty ? widget.user.position : 'Pegawai',
+            currentUser.position.isNotEmpty ? currentUser.position : 'Pegawai', // Gunakan currentUser
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
@@ -318,6 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- PERUBAHAN 4: Update _buildBottomNavBar untuk menunggu hasil dari ProfileScreen ---
   Widget _buildBottomNavBar() {
     return BottomAppBar(
       color: const Color(0xFFF3E8FF).withOpacity(0.5),
@@ -331,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _buildNavBarItem(icon: Icons.home, label: 'Home', isSelected: true, onTap: () {}),
             const SizedBox(width: 40),
-            if (widget.user.role == 'admin')
+            if (currentUser.role == 'admin') // Gunakan currentUser
               _buildNavBarItem(
                 icon: Icons.person_add,
                 label: 'Tambah',
@@ -341,7 +363,15 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildNavBarItem(
                 icon: Icons.person,
                 label: 'Profil',
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen(user: widget.user))),
+                onTap: () async {
+                  // Tunggu hasil dari ProfileScreen
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen(user: currentUser)),
+                  );
+                  // Setelah kembali, refresh data pengguna
+                  _refreshUserData();
+                },
               ),
           ],
         ),

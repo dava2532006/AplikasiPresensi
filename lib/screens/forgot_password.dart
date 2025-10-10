@@ -10,7 +10,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> with SingleTickerProviderStateMixin {
   final TextEditingController _emailController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService. instance;
   bool _isLoading = false;
 
   late AnimationController _logoAnimationController;

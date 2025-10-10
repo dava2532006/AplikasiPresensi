@@ -12,7 +12,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _positionController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService.instance;
 
   bool _isLoading = false;
 

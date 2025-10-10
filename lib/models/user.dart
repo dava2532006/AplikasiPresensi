@@ -4,6 +4,7 @@ class User {
   final String email;
   final String position;
   final String role;
+  final String photoURL;
 
   User({
     required this.uid,
@@ -11,6 +12,7 @@ class User {
     required this.email,
     required this.position,
     required this.role,
+    required this.photoURL,
   });
 
   factory User.fromMap(Map<String, dynamic> data) {
@@ -20,6 +22,7 @@ class User {
       email: data['email'] ?? '',
       position: data['position'] ?? '',
       role: data['role'] ?? '',
+      photoURL: data['photoURL'], 
     );
   }
 }

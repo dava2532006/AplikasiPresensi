@@ -13,7 +13,7 @@ class _ChangePasswordProfileScreenState extends State<ChangePasswordProfileScree
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _authService = AuthService();
+  final _authService = AuthService.instance;
   bool _isLoading = false;
   bool _isPasswordVisible = false;
 

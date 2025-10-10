@@ -13,10 +13,14 @@ class ChangePasswordScreen extends StatefulWidget {
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final TextEditingController _newPasswordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService.instance;
   bool _isLoading = false;
+  
+  // --- VARIABEL UNTUK KONTROL VISIBILITAS ---
+  bool _isPasswordVisible = false;
 
   void _handleChangePassword() async {
+    // ... (Logika fungsi ini tidak berubah, Anda bisa biarkan)
     setState(() {
       _isLoading = true;
     });
@@ -26,6 +30,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     try {
       if (newPassword.isEmpty) {
         throw Exception("Kata sandi tidak boleh kosong.");
+      }
+      if (newPassword.length < 6) {
+        throw Exception("Kata sandi minimal 6 karakter.");
       }
 
       await _authService.updatePassword(widget.user, newPassword);
@@ -48,7 +55,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(e.toString().replaceAll("Exception: ", ""))),
         );
       }
     } finally {
@@ -69,40 +76,80 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Ganti Kata Sandi'),
-        automaticallyImplyLeading: false, // Menghilangkan tombol kembali
+        title: const Text('Buat Kata Sandi Baru'),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        titleTextStyle: TextStyle(color: Colors.grey[800], fontSize: 20, fontWeight: FontWeight.bold),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            const Text(
-              "Untuk alasan keamanan, Anda harus mengubah kata sandi bawaan Anda. Mohon masukkan kata sandi baru.",
-              style: TextStyle(fontSize: 16),
-              textAlign: TextAlign.center,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Container(
+            width: 350,
+            padding: const EdgeInsets.all(24.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _newPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Kata Sandi Baru',
-                border: OutlineInputBorder(),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  "Untuk keamanan, harap ubah kata sandi default Anda. Masukkan kata sandi baru di bawah ini.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: !_isPasswordVisible, // <-- Gunakan variabel state
+                  decoration: InputDecoration(
+                    labelText: 'Kata Sandi Baru',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    suffixIcon: IconButton(
+                      icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () {
+                        // --- PERBAIKAN: Perbarui state saat tombol ditekan ---
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: _isLoading ? null : _handleChangePassword,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                        )
+                      : const Text('Simpan Kata Sandi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleChangePassword,
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Simpan Kata Sandi Baru'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

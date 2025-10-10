@@ -14,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService.instance;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         });
       }
     }
-  }
+  } //handle login
 
   @override
   Widget build(BuildContext context) {
