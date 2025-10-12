@@ -132,12 +132,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // --- PERUBAHAN UI ADA DI SINI ---
                 Stack(
                   children: [
                     CircleAvatar(
                       radius: 60,
-                      backgroundColor: Colors.blue.shade100,
+                      backgroundColor: const Color.fromARGB(255, 200, 234, 253),
                       backgroundImage: currentUser.photoURL != null && currentUser.photoURL!.isNotEmpty
                           ? NetworkImage("${currentUser.photoURL!}?t=${DateTime.now().millisecondsSinceEpoch}")
                           : null,
@@ -145,7 +144,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ? const Icon(Icons.person, size: 100, color: Colors.white)
                           : null,
                     ),
-                    // Tombol kecil di pojok kanan bawah
                     Positioned(
                       bottom: 0,
                       right: 0,
@@ -153,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: _isUploading ? null : _pickAndUploadImage,
                         child: CircleAvatar(
                           radius: 20,
-                          backgroundColor: Colors.white,
+                          backgroundColor: const Color.fromARGB(255, 240, 236, 236),
                           child: _isUploading
                               ? const SizedBox(
                                   width: 20,
@@ -162,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 )
                               : const Icon(
                                   Icons.camera_alt,
-                                  color: Colors.blue,
+                                  color: Color.fromARGB(255, 142, 206, 236),
                                   size: 22,
                                 ),
                         ),
@@ -170,7 +168,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-                // --- SAMPAI SINI ---
                 const SizedBox(height: 16),
                 Text(
                   currentUser.name,
@@ -189,17 +186,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   value: currentUser.position.isNotEmpty ? currentUser.position : '-',
                 ),
                 const Divider(height: 20, indent: 16, endIndent: 16),
-                _buildProfileInfoRow(
-                  icon: Icons.admin_panel_settings_outlined,
-                  label: 'Role',
-                  value: currentUser.role,
-                ),
-                const Divider(height: 20, indent: 16, endIndent: 16),
 
-                ListTile(
-                  leading: const Icon(Icons.edit, color: Colors.blueAccent),
-                  title: const Text('Update Profil', style: TextStyle(fontWeight: FontWeight.bold)),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                _buildProfileMenuRow(
+                  icon: Icons.edit,
+                  label: 'Update Profil',
                   onTap: () async {
                     final result = await Navigator.push(
                       context,
@@ -212,10 +202,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     }
                   },
                 ),
-                 ListTile(
-                  leading: const Icon(Icons.lock_outline, color: Colors.orangeAccent),
-                  title: const Text('Ganti Password', style: TextStyle(fontWeight: FontWeight.bold)),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                 const Divider(height: 20, indent: 16, endIndent: 16),
+
+                 _buildProfileMenuRow(
+                  icon: Icons.lock_outline,
+                  label: 'Ganti Password',
                   onTap: () {
                     Navigator.push(
                       context,
@@ -280,6 +271,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: const TextStyle(fontSize: 16),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProfileMenuRow({required IconData icon, required String label, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.grey.shade700),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }

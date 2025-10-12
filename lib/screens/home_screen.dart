@@ -149,12 +149,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       children: [
         CircleAvatar(
-          radius: 24,
+          radius: 40,
           backgroundColor: Colors.blue.shade100,
-          backgroundImage: currentUser.photoURL != null && currentUser.photoURL!.isNotEmpty
-              ? NetworkImage("${currentUser.photoURL!}?t=${DateTime.now().millisecondsSinceEpoch}")
+          backgroundImage: currentUser.photoURL.isNotEmpty
+              ? NetworkImage("${currentUser.photoURL}?t=${DateTime.now().millisecondsSinceEpoch}")
               : null,
-          child: (currentUser.photoURL == null || currentUser.photoURL!.isEmpty)
+          child: (currentUser.photoURL.isEmpty)
               ? Icon(Icons.person, size: 30, color: Colors.blue.shade800)
               : null,
         ),
